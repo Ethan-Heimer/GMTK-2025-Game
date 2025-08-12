@@ -1,0 +1,20 @@
+{
+    "Name": "TestScene",
+    "GameObjects": [
+        {
+            "Position": {
+                "x": 0,
+                "y": 0
+            },
+            "Texture": "./assets/Dog.jpeg"
+        },
+        {
+            "Position": {
+                "x": 0,
+                "y": 100
+            },
+            "Texture": "./assets/Dog.jpeg"
+        }
+
+    ]
+}

@@ -1,0 +1,41 @@
+#! /bin/bash
+
+#retreving enviroment variables
+ProjectName=$( ./.bash/getEnvVar.sh PROJECT_NAME ./.var/env.txt )
+echo $ProjectName
+
+#clean up bin dir
+echo "Cleaning Bin..."
+cd build
+make clean
+cd ..
+
+#create CMakeLists.txt
+echo "Creating CMakeLists.txt..."
+cat ./application/CMakeLists.template| sed "s/project_name/${ProjectName}/g" > ./application/CMakeLists.txt
+
+#append directories
+echo "Appending directories to CMake file..."
+./.bash/appendDirsToCMakeLists.sh "./application"
+
+#generate dir CMakeFiles
+echo "Generating CMakeLists.txt files in directories..."
+./.bash/generateDirCMakeFiles.sh $ProjectName
+
+#start building program here
+echo "Building Program..."
+cd build
+cmake ../application/
+
+#finishing build
+echo "finishing build..."
+make
+
+#cleanup 
+echo "Cleaning Up..."
+cd ..
+rm ./application/CMakeLists.txt
+
+#open
+cd build/bin
+./$(echo $ProjectName | sed 's/"//g')

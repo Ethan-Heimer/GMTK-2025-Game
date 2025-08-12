@@ -1,0 +1,73 @@
+cmake_minimum_required(VERSION 3.2)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(PROJECT_DIR "src/project") 
+set(NAME project_name)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_STANDARD 20)
+
+message("${ERROR_OUTPUT}")
+
+project(${NAME})
+
+cmake_policy(SET CMP0076 NEW)
+
+message("Ensuring SDL is installed")
+
+include(FetchContent)
+FetchContent_Declare(
+    SDL
+    GIT_REPOSITORY "https://github.com/libsdl-org/SDL"
+    GIT_TAG "origin/main"
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/src/external/SDL3"
+)
+
+message("Ensuring SDL Image is installed")
+
+FetchContent_Declare(
+    SDLImage
+    GIT_REPOSITORY "https://github.com/libsdl-org/SDL_image"
+    GIT_TAG "origin/main"
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/src/external/SDL3image"
+)
+
+message("Ensuring Json Parser is installed")
+
+FetchContent_Declare(
+    Json
+    GIT_REPOSITORY "https://github.com/nlohmann/json"
+    GIT_TAG "origin/master"
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/src/external/Json"
+)
+
+FetchContent_MakeAvailable(SDL SDLImage Json)
+
+add_executable(${NAME}) 
+
+target_sources(${NAME} PRIVATE 
+    ${PROJECT_DIR}/main.cpp
+)
+
+#Example on how to add new directory to the project
+#Every directory will need a CMakeLists.txt file with a target_sources in side like the block above
+#add_subdirectory("${CMAKE_SOURCE_DIR}/${PROJECT_DIR}/example")
+
+message("Linking SDL Libs")
+
+target_include_directories(${NAME} PRIVATE ./src/external/SDL3/include)
+target_include_directories(${NAME} PRIVATE ./src/external/SDL3image/include)
+target_include_directories(${NAME} PRIVATE ./src/external/Json/include)
+
+target_include_directories(${NAME} PRIVATE ./src/project/includes)
+
+target_link_libraries(${NAME} PRIVATE SDL3::SDL3)
+target_link_libraries(${NAME} PRIVATE SDL3_image::SDL3_image)
+target_link_libraries(${NAME} PRIVATE nlohmann_json)
+
+message("Copying Assets")
+
+file(COPY "${CMAKE_SOURCE_DIR}/${PROJECT_DIR}/assets/"
+    DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/assets/"
+)
+
+
