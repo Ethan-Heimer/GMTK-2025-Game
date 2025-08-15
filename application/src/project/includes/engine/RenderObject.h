@@ -8,8 +8,8 @@ namespace Engine{
     class RenderObject{
         public: 
             RenderObject();
-            RenderObject(const RenderObject& copy) = default;
-            RenderObject(RenderObject&& move) = default;
+            RenderObject(const RenderObject& copy);
+            RenderObject(RenderObject&& move);
 
             //Get and Setters 
 

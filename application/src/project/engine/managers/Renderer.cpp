@@ -3,6 +3,8 @@
 #include "engine/AssetManager.h"
 #include "engine/RenderObject.h"
 #include "SDL3/SDL.h"
+#include <vector>
+#include "engine/GameObject.h"
 
 using namespace Engine;
 
@@ -18,25 +20,27 @@ void Renderer::Init(){
     }
 };
 
-void Renderer::Render(){
-    
-
+void Renderer::Render(){ 
     SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0x00);
     SDL_RenderClear(renderer);
 
-    //this is just testing code ----
-    SDL_Surface* surface = AssetManager::GetSurface("./assets/Dog.jpeg");
-    RenderObject obj{};
+    GameObject** gameObjectArray;
+    int length;
 
-    obj.SetSurface(surface);
-    //---
+    gameObjectArray = GameObjectManager::GetGameObjects(&length);
 
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, obj.GetSurface());
-    SDL_FRect rect = obj.GetRect();
-    //NULL should be replace with a rect for sprite sheets
-    SDL_RenderTextureRotated(renderer, texture, NULL, 
-            &rect, obj.GetAngle(), obj.GetPivot(), obj.GetFlipMode());
-    
+    for(int i = 0; i < length; i++){
+        RenderObject* obj = gameObjectArray[i]->GetRenderObject();
+
+        SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, obj->GetSurface());
+        SDL_FRect rect = obj->GetRect();
+        //NULL should be replace with a rect for sprite sheets
+        SDL_RenderTextureRotated(renderer, texture, NULL, 
+            &rect, obj->GetAngle(), obj->GetPivot(), obj->GetFlipMode());
+
+        SDL_DestroyTexture(texture);
+    }
+
     SDL_RenderPresent(renderer);
 }
 
