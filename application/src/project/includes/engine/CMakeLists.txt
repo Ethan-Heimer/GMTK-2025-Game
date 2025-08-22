@@ -1,5 +1,7 @@
 target_sources("NewProject" PRIVATE
   AssetManager.h
+  Component.h
+  Debug.h
   EventManager.h
   GameObject.h
   Renderer.h

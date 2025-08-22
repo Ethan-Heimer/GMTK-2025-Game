@@ -2,11 +2,14 @@
 #define GAMEOBJECT
 
 #include <vector>
+#include <iostream>
 
 #include "RenderObject.h"
 #include "Renderer.h"
 #include "Game.h"
+#include "Component.h"
 
+#include "engine/Debug.h"
 #include "nlohmann/json.hpp"
 #include "nlohmann/json_fwd.hpp"
 
@@ -32,10 +35,33 @@ namespace Engine{
             GameObject& operator= (GameObject&& move);
 
             RenderObject* GetRenderObject();
+
+            template <IsComponent T>
+            T* AddComponent(){
+                T* component = new T();
+                components.push_back(component);
+                return component;
+            }
+
+            template <IsComponent T>
+            T* GetComponent(){
+                std::cout << typeid(T).name() << std::endl;
+                for(auto& component : components){
+                    if(typeid(T) == typeid(*component)){
+                        Debug::Log("Same!");
+                        return (T*)component;
+                    }
+
+                }
+
+                return nullptr;
+            }
+
         private:
             int ID;
 
             RenderObject* renderObject; 
+            std::vector<Component*> components;
     };
 
     class GameObjectManager{

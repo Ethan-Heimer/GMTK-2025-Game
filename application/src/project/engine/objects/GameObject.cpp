@@ -1,5 +1,8 @@
 #include "engine/GameObject.h"
+#include "engine/Debug.h"
 
+#include <type_traits>
+#include <typeinfo>
 #include <iostream>
 
 using namespace Engine;
@@ -59,38 +62,80 @@ GameObject::GameObject(Json data){
 
 GameObject::~GameObject(){
     delete renderObject;
+
+    for(auto& o : components){
+        delete o;
+    }
+
+    components.clear();
     renderObject = nullptr;
 }
 
 GameObject::GameObject(const GameObject& copy){
-    std::cout << "COPY" << std::endl;
+    Debug::Log("COPYING GameObject Data");
     this->renderObject = new RenderObject{*copy.renderObject}; 
+
+    //COPY COMPONENTS 
+    for(auto& o : copy.components){
+       auto component = new Component(*o); 
+       components.push_back(component);
+    }
+    
 }
 
 GameObject::GameObject(GameObject&& move){
-    std::cout << "MOVE" << std::endl;
+    Debug::Log("MOVEING GameObject Data");
     this->renderObject = move.renderObject;
 
+    //MOVE COMPONENTS
+    for(auto& o : move.components){
+        this->components.push_back(o);
+    }
+
+    move.components.clear();
     move.renderObject = nullptr;
 }
 
 GameObject& GameObject::operator=(const GameObject& copy){
-    std::cout << "COPY" << std::endl;
+    Debug::Log("COPYING GameObject Data");
     if(this != &copy){
         delete renderObject;
+
+        for(auto& o : this->components){
+            delete o;
+        }
+        components.clear();
         
         this->renderObject = new RenderObject{*copy.renderObject};
+        for(auto& o : copy.components){
+            auto component = new Component(*o);
+            this->components.push_back(component);
+        }
     }
 
     return *this;
 }
 
 GameObject& GameObject::operator=(GameObject&& move){
-    std::cout << "MOVE" << std::endl;
+    Debug::Log("MOVEING GameObject Data");
     if(this != &move){
+        //clear my data!
         delete renderObject;
 
+        for(auto& o : this->components){
+            delete o;
+        }
+        components.clear();
+
+        //give me your data!
+
         renderObject = move.renderObject;
+        
+        for(auto& o : move.components){
+            this->components.push_back(o);
+        }
+
+        move.components.clear();     
         move.renderObject = nullptr;
    }
 
@@ -100,3 +145,6 @@ GameObject& GameObject::operator=(GameObject&& move){
 RenderObject* GameObject::GetRenderObject(){
     return renderObject;
 }
+
+
+

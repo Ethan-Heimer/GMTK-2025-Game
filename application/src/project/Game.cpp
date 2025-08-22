@@ -4,6 +4,7 @@
 #include "engine/GameObject.h"
 #include "engine/Renderer.h"
 #include "engine/EventManager.h"
+#include "game/components/TestComponent.h"
 
 using namespace Engine;
 
@@ -21,13 +22,19 @@ void Game::Init(){
     auto renderObject = gameObject->GetRenderObject();
 
     SDL_Surface* surface = AssetManager::GetSurface("./assets/Dog.jpeg");
-
     renderObject->SetSurface(surface);
 
     GameObject* gameObjectTwo = GameObjectManager::Duplicate(*gameObject);
     auto renderObjectTwo = gameObjectTwo->GetRenderObject();
 
     renderObjectTwo->SetPosition(100, 0);
+    gameObjectTwo->AddComponent<TestComponent>();
+    gameObjectTwo->AddComponent<TestComponentTwo>();
+
+    TestComponent* testComponnt = gameObjectTwo->GetComponent<TestComponent>();
+    if(testComponnt != nullptr){
+        testComponnt->Update();
+    }
 }
 
 void Game::Run(){
