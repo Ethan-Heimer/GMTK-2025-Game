@@ -7,6 +7,7 @@
 #include "engine/GameObject.h"
 #include "engine/AssetManager.h"
 
+#include <iostream>
 #include <string>
 
 using namespace Engine;
@@ -25,7 +26,7 @@ class ImageRenderer : public Component{
         }
 
         Component* Move() override{
-            ImageRenderer* move = new ImageRenderer(gameObject);
+            ImageRenderer* move = new ImageRenderer();
 
             move->surface = this->surface; 
             
@@ -36,7 +37,7 @@ class ImageRenderer : public Component{
         }
 
         Component* Copy() override{
-            ImageRenderer* copy = new ImageRenderer(gameObject);
+            ImageRenderer* copy = new ImageRenderer();
 
             //put in asset manager
             copy->surface = SDL_DuplicateSurface(surface);
@@ -46,10 +47,14 @@ class ImageRenderer : public Component{
 
         void Update() override{
             if(transform != nullptr){
-                Debug::Log("GameObject does have a Transform!");
                 Renderer::StageRender(surface, transform->position, transform->scale, transform->angle);
             }
+
+            std::cout << gameObject->GetId() << std::endl;
+
         }
+
+       ~ImageRenderer() override {}
 
     private:
         Transform* transform = nullptr;

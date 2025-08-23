@@ -24,47 +24,21 @@ namespace Engine{
     
     class Component{
         public:
-            Component(GameObject* owner){
-                gameObject = owner;
-            }
+            friend GameObject;
 
             virtual void Start(){};
             virtual void Update(){};
-            virtual void OnDestroy(){};
 
-            virtual Component* Copy(){
-                return new Component(gameObject);
-            };
+            virtual Component* Copy() = 0;
+            virtual Component* Move() = 0;
 
-            virtual Component* Move(){
-                return new Component(gameObject);
-            }
-
-            /*
-            C           
-            //Rule of Three
-            ~Component(){
-                OnDestroy();
-            }
-
-            Component(const Component& Copy)
-            {
-                gameObject = Copy.gameObject;
-                OnCopy(Copy);
-            }
-
-            Component(Component&& Move)
-            {
-                gameObject = Move.gameObject;
-
-                OnMove(std::move(Move));
-
-                Move.gameObject = nullptr;
-            }
-            */
+            virtual ~Component(){}
 
         protected:
             GameObject* gameObject = nullptr;
+
+        private:
+            void SetOwnerGameObject(GameObject* gameObject);
     };
 
     class GameObject{
@@ -87,19 +61,18 @@ namespace Engine{
 
             template <IsComponent T>
             T* AddComponent(){
-                T* component = new T(this);
+                T* component = new T();
                 
-                component->Start();
-                components.push_back(component);
+                AddComponent(component);
                 return component;
             }
 
+            void AddComponent(Component*);
+
             template <IsComponent T>
             T* GetComponent(){
-                std::cout << typeid(T).name() << std::endl;
                 for(auto& component : components){
                     if(typeid(T) == typeid(*component)){
-                        Debug::Log("Same!");
                         return (T*)component;
                     }
 
@@ -108,16 +81,24 @@ namespace Engine{
                 return nullptr;
             }
 
+            void RemoveComponent(Component* Component);
+            void ClearComponents();
+
+            int GetComponentCount();
+            int GetId();
+
         private:
+            std::vector<Component*> components;
             int ID;
 
-            std::vector<Component*> components;
+            void CopyComponentsFrom(const GameObject& CopyFrom);
+            void MoveComponentsFrom(GameObject&& Movefrom);
     };
 
     class GameObjectManager{
         public:
             static GameObject* Instanciate();
-            static GameObject* Duplicate(const GameObject& gameObject);
+            static GameObject* Duplicate(const GameObject* gameObject);
             static void Destroy(GameObject* gameObject);
 
             static void FreeGameObjects();

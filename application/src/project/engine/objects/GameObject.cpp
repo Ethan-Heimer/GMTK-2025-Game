@@ -2,11 +2,18 @@
 #include "components/TransformComponent.h"
 #include "engine/Debug.h"
 
+#include <algorithm>
 #include <type_traits>
 #include <typeinfo>
 #include <iostream>
+#include <utility>
 
 using namespace Engine;
+
+//component
+void Component::SetOwnerGameObject(GameObject* gameObject){
+    this->gameObject = gameObject;
+}
 
 //Game Object Manager
 std::vector<GameObject*> GameObjectManager::gameObjects;
@@ -22,8 +29,8 @@ GameObject* GameObjectManager::Instanciate(){
     return gameObject;
 }
 
-GameObject* GameObjectManager::Duplicate(const GameObject& copy){
-    GameObject* gameObject = new GameObject(copy);
+GameObject* GameObjectManager::Duplicate(const GameObject* copy){
+    GameObject* gameObject = new GameObject(*copy);
     gameObject->ID = gameObjects.size();
 
     gameObjects.push_back(gameObject);
@@ -61,50 +68,26 @@ GameObject::GameObject(Json data){
 }
 
 GameObject::~GameObject(){
-
-    for(auto& o : components){
-        delete o;
-        Debug::Log("Freed Component");
-    }
-
-    components.clear();
+    ClearComponents();
 }
 
 GameObject::GameObject(const GameObject& copy){
     Debug::Log("COPYING GameObject Data");
 
     //COPY COMPONENTS 
-    for(auto& o : copy.components){
-       auto component = o->Copy(); 
-       components.push_back(component);
-    }
-    
+    this->CopyComponentsFrom(copy);
 }
 
 GameObject::GameObject(GameObject&& move){
     Debug::Log("MOVEING GameObject Data");
-
-    //MOVE COMPONENTS
-    for(auto& o : move.components){
-        this->components.push_back(o);
-    }
-
-    move.components.clear();
+    this->MoveComponentsFrom(std::move(move));
 }
 
 GameObject& GameObject::operator=(const GameObject& copy){
     Debug::Log("COPYING GameObject Data");
     if(this != &copy){
-        for(auto& o : this->components){
-            delete o;
-            Debug::Log("Freed Component");
-        }
-        components.clear();
-        
-        for(auto& o : copy.components){
-            auto component = new Component(*o);
-            this->components.push_back(component);
-        }
+        ClearComponents();
+        this->CopyComponentsFrom(copy);
     }
 
     return *this;
@@ -113,24 +96,25 @@ GameObject& GameObject::operator=(const GameObject& copy){
 GameObject& GameObject::operator=(GameObject&& move){
     Debug::Log("MOVEING GameObject Data");
     if(this != &move){
-        //clear my data!
-
-        for(auto& o : this->components){
-            delete o;
-            Debug::Log("Freed Component");
-        }
-        components.clear();
-
-        //give me your data!
-        
-        for(auto& o : move.components){
-            this->components.push_back(o);
-        }
-
-        move.components.clear();     
+        ClearComponents();
+        this->MoveComponentsFrom(std::move(move));
    }
 
    return *this;
+}
+
+void GameObject::RemoveComponent(Component* component){
+    auto end = std::remove(components.begin(), components.end(), component);
+    components.erase(end, components.end());
+}
+
+void GameObject::ClearComponents(){ 
+    for(auto& o : this->components){
+        delete o;
+        Debug::Log("Freed Component");
+    }
+
+    components.clear();
 }
 
 void GameObject::ExecuteUpdate(){
@@ -139,6 +123,33 @@ void GameObject::ExecuteUpdate(){
     }
 }
 
+int GameObject::GetId(){
+    return ID;
+}
 
+int GameObject::GetComponentCount(){
+    return components.size();
+}
 
+void GameObject::AddComponent(Component* component){ 
+    component->SetOwnerGameObject(this);
+    component->Start();
 
+    components.push_back(component);
+}
+
+void GameObject::CopyComponentsFrom(const GameObject& CopyFrom){
+    for(auto& o : CopyFrom.components){
+        auto component = o->Copy();
+        this->AddComponent(component);
+    }
+}
+
+void GameObject::MoveComponentsFrom(GameObject&& MoveFrom){
+    for(auto& o : MoveFrom.components){
+        this->AddComponent(o);
+        MoveFrom.RemoveComponent(o);
+    }
+
+    MoveFrom.components.clear();
+}
