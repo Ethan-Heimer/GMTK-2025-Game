@@ -4,11 +4,10 @@
 #include <vector>
 #include <iostream>
 
-#include "RenderObject.h"
 #include "Renderer.h"
 #include "Game.h"
-#include "Component.h"
 
+#include "SDL3/SDL_rect.h"
 #include "engine/Debug.h"
 #include "nlohmann/json.hpp"
 #include "nlohmann/json_fwd.hpp"
@@ -17,7 +16,57 @@ using Json = nlohmann::json;
 
 namespace Engine{
     class GameObjectManager;
+    class Component;
+    class GameObject;
+
+    template<typename T>
+    concept IsComponent = std::is_base_of<Component, T>::value;
     
+    class Component{
+        public:
+            Component(GameObject* owner){
+                gameObject = owner;
+            }
+
+            virtual void Start(){};
+            virtual void Update(){};
+            virtual void OnDestroy(){};
+
+            virtual Component* Copy(){
+                return new Component(gameObject);
+            };
+
+            virtual Component* Move(){
+                return new Component(gameObject);
+            }
+
+            /*
+            C           
+            //Rule of Three
+            ~Component(){
+                OnDestroy();
+            }
+
+            Component(const Component& Copy)
+            {
+                gameObject = Copy.gameObject;
+                OnCopy(Copy);
+            }
+
+            Component(Component&& Move)
+            {
+                gameObject = Move.gameObject;
+
+                OnMove(std::move(Move));
+
+                Move.gameObject = nullptr;
+            }
+            */
+
+        protected:
+            GameObject* gameObject = nullptr;
+    };
+
     class GameObject{
         public: 
             friend GameObjectManager;
@@ -34,11 +83,13 @@ namespace Engine{
             GameObject& operator= (const GameObject& copy);
             GameObject& operator= (GameObject&& move);
 
-            RenderObject* GetRenderObject();
+            void ExecuteUpdate();
 
             template <IsComponent T>
             T* AddComponent(){
-                T* component = new T();
+                T* component = new T(this);
+                
+                component->Start();
                 components.push_back(component);
                 return component;
             }
@@ -60,7 +111,6 @@ namespace Engine{
         private:
             int ID;
 
-            RenderObject* renderObject; 
             std::vector<Component*> components;
     };
 

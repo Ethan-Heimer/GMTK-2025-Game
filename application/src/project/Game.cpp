@@ -4,6 +4,7 @@
 #include "engine/GameObject.h"
 #include "engine/Renderer.h"
 #include "engine/EventManager.h"
+#include "game/components/ImageRenderer.h"
 #include "game/components/TestComponent.h"
 
 using namespace Engine;
@@ -19,22 +20,17 @@ void Game::Init(){
     Renderer::Init();
 
     GameObject* gameObject = GameObjectManager::Instanciate();
-    auto renderObject = gameObject->GetRenderObject();
-
-    SDL_Surface* surface = AssetManager::GetSurface("./assets/Dog.jpeg");
-    renderObject->SetSurface(surface);
-
-    GameObject* gameObjectTwo = GameObjectManager::Duplicate(*gameObject);
-    auto renderObjectTwo = gameObjectTwo->GetRenderObject();
-
-    renderObjectTwo->SetPosition(100, 0);
-    gameObjectTwo->AddComponent<TestComponent>();
-    gameObjectTwo->AddComponent<TestComponentTwo>();
-
-    TestComponent* testComponnt = gameObjectTwo->GetComponent<TestComponent>();
-    if(testComponnt != nullptr){
-        testComponnt->Update();
+    ImageRenderer* imageRenderer = gameObject->AddComponent<ImageRenderer>();
+    if(imageRenderer != nullptr){
+        imageRenderer->SetImage("./assets/Dog.jpeg");
     }
+
+
+    /*
+    GameObject* gameObjectTwo = GameObjectManager::Duplicate(*gameObject);
+    Transform* transform = gameObjectTwo->GetComponent<Transform>();
+    transform->position->x = 100;
+    */
 }
 
 void Game::Run(){
@@ -44,6 +40,17 @@ void Game::Run(){
         if(event.type == SDL_EVENT_QUIT){
             std::cout << "Closing" << std::endl;
             break;
+        }
+
+        //JSON Scenes not implemented yet this is a temp solution to run GO Update
+        
+        GameObject** gameObjects;
+        int length;
+
+        gameObjects = GameObjectManager::GetGameObjects(&length);
+
+        for(int i = 0; i < length; i++){
+            gameObjects[i]->ExecuteUpdate();
         }
 
         Renderer::Render();

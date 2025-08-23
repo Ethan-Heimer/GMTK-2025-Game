@@ -1,4 +1,3 @@
 target_sources("NewProject" PRIVATE
-  ImageRenderer.h
-  TestComponent.h
+  TransformComponent.h
 )

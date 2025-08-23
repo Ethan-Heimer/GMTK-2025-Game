@@ -1,4 +1,5 @@
 #include "engine/GameObject.h"
+#include "components/TransformComponent.h"
 #include "engine/Debug.h"
 
 #include <type_traits>
@@ -14,8 +15,10 @@ GameObject* GameObjectManager::Instanciate(){
     GameObject* gameObject = new GameObject();
     gameObject->ID = gameObjects.size();
 
-    gameObjects.push_back(gameObject);
+    //auto add transform component
+    gameObject->AddComponent<Transform>();
 
+    gameObjects.push_back(gameObject);
     return gameObject;
 }
 
@@ -24,7 +27,6 @@ GameObject* GameObjectManager::Duplicate(const GameObject& copy){
     gameObject->ID = gameObjects.size();
 
     gameObjects.push_back(gameObject);
-
     return gameObject;
 }
 
@@ -52,32 +54,28 @@ GameObject** GameObjectManager::GetGameObjects(int* length){
 }
 
 //Game Object 
-GameObject::GameObject(){
-    renderObject = new RenderObject();
-}
+GameObject::GameObject(){}
 
 GameObject::GameObject(Json data){
     std::cout << data << std::endl; 
 }
 
 GameObject::~GameObject(){
-    delete renderObject;
 
     for(auto& o : components){
         delete o;
+        Debug::Log("Freed Component");
     }
 
     components.clear();
-    renderObject = nullptr;
 }
 
 GameObject::GameObject(const GameObject& copy){
     Debug::Log("COPYING GameObject Data");
-    this->renderObject = new RenderObject{*copy.renderObject}; 
 
     //COPY COMPONENTS 
     for(auto& o : copy.components){
-       auto component = new Component(*o); 
+       auto component = o->Copy(); 
        components.push_back(component);
     }
     
@@ -85,7 +83,6 @@ GameObject::GameObject(const GameObject& copy){
 
 GameObject::GameObject(GameObject&& move){
     Debug::Log("MOVEING GameObject Data");
-    this->renderObject = move.renderObject;
 
     //MOVE COMPONENTS
     for(auto& o : move.components){
@@ -93,20 +90,17 @@ GameObject::GameObject(GameObject&& move){
     }
 
     move.components.clear();
-    move.renderObject = nullptr;
 }
 
 GameObject& GameObject::operator=(const GameObject& copy){
     Debug::Log("COPYING GameObject Data");
     if(this != &copy){
-        delete renderObject;
-
         for(auto& o : this->components){
             delete o;
+            Debug::Log("Freed Component");
         }
         components.clear();
         
-        this->renderObject = new RenderObject{*copy.renderObject};
         for(auto& o : copy.components){
             auto component = new Component(*o);
             this->components.push_back(component);
@@ -120,31 +114,31 @@ GameObject& GameObject::operator=(GameObject&& move){
     Debug::Log("MOVEING GameObject Data");
     if(this != &move){
         //clear my data!
-        delete renderObject;
 
         for(auto& o : this->components){
             delete o;
+            Debug::Log("Freed Component");
         }
         components.clear();
 
         //give me your data!
-
-        renderObject = move.renderObject;
         
         for(auto& o : move.components){
             this->components.push_back(o);
         }
 
         move.components.clear();     
-        move.renderObject = nullptr;
    }
 
    return *this;
 }
 
-RenderObject* GameObject::GetRenderObject(){
-    return renderObject;
+void GameObject::ExecuteUpdate(){
+    for(auto& o : components){
+        o->Update();
+    }
 }
+
 
 
 

@@ -1,7 +1,8 @@
 #include "engine/Renderer.h"
+#include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_render.h"
+#include "SDL3/SDL_surface.h"
 #include "engine/AssetManager.h"
-#include "engine/RenderObject.h"
 #include "SDL3/SDL.h"
 #include <vector>
 #include "engine/GameObject.h"
@@ -10,6 +11,7 @@ using namespace Engine;
 
 SDL_Renderer* Renderer::renderer = NULL;
 SDL_Window* Renderer::window = NULL;
+std::vector<RenderStageData*> Renderer::stageData;
 
 void Renderer::Init(){
     bool createWindow = SDL_CreateWindowAndRenderer("Hello SDL", 
@@ -20,28 +22,41 @@ void Renderer::Init(){
     }
 };
 
+void Renderer::StageRender
+(SDL_Surface *surface, SDL_FPoint *position, SDL_FPoint *scale, double *angle){
+    auto stage = new RenderStageData(surface, position, scale, angle);
+    stageData.push_back(stage);
+}
+
+void Renderer::ClearStage(){
+    for(auto& o : stageData){
+        delete o;
+    }
+
+    stageData.clear();
+}
+
 void Renderer::Render(){ 
     SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0x00);
     SDL_RenderClear(renderer);
 
-    GameObject** gameObjectArray;
-    int length;
+    for(auto& o : stageData){
+        SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, o->surface);
 
-    gameObjectArray = GameObjectManager::GetGameObjects(&length);
+        const SDL_FRect* rect = o->rect;
+        double angle = *o->angle;
+        const SDL_FPoint* pivot = &o->pivot;
+        const SDL_FlipMode flip = o->flip;
 
-    for(int i = 0; i < length; i++){
-        RenderObject* obj = gameObjectArray[i]->GetRenderObject();
-
-        SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, obj->GetSurface());
-        SDL_FRect rect = obj->GetRect();
         //NULL should be replace with a rect for sprite sheets
         SDL_RenderTextureRotated(renderer, texture, NULL, 
-            &rect, obj->GetAngle(), obj->GetPivot(), obj->GetFlipMode());
+            rect, angle, pivot, flip);
 
         SDL_DestroyTexture(texture);
     }
 
     SDL_RenderPresent(renderer);
+    ClearStage();
 }
 
 void Renderer::Shutdown(){
